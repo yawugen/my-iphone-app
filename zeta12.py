@@ -1,40 +1,47 @@
-import numpy as np
 import matplotlib.pyplot as plt
 
-# 1. ゼータ関数を近似計算する関数
-def zeta_approx(s, N=3000):
-    n = np.arange(1, N + 1)
-    signs = (-1) ** (n - 1)
-    eta = np.zeros_like(s, dtype=complex)
-    for i in range(N):
-        eta += signs[i] / (n[i] ** s)
-    return eta / (1.0 - 2.0 ** (1.0 - s))
 
-# 2. 実部を 0.5 に固定し、虚部 t の範囲（10〜30）を設定
-t = np.linspace(10.0, 30.0, 500)  # 滑らかにするためにサンプリング数を500に増加
-s = 0.5 + 1j * t
+def generate_primes(n_primes):
+    """エラトステネスの篩を使って、指定した個数の素数を取得する関数"""
+    # 10万番目の素数は約130万件の範囲内に存在するため、探索上限を150万に設定
+    limit = 1500000
+    is_prime = [True] * limit
+    primes = []
 
-# 3. ゼータ関数の絶対値 |ζ(0.5 + it)| を計算
-z_abs = np.abs(zeta_approx(s))
+    for p in range(2, limit):
+        if is_prime[p]:
+            primes.append(p)
+            if len(primes) == n_primes:
+                break
+            # pの倍数をすべて除外
+            for i in range(p * p, limit, p):
+                is_prime[i] = False
+    return primes
 
-# 4. 2次元断面グラフの描画
-plt.figure(figsize=(10, 5))
-plt.plot(t, z_abs, color='red', linewidth=2, label=r'$|\zeta(0.5 + it)|$')
 
-# 既知の非自明な零点（谷底が0になるポイント）をグラフ上にプロット
-zeros = [14.1347, 21.0220, 25.0109]
-for zero in zeros:
-    plt.axvline(x=zero, color='blue', linestyle='--', alpha=0.5)
-    plt.plot(zero, 0, 'bo')  # 青い点で零点を強調
-    plt.text(zero, -0.15, f'{zero:.2f}', color='blue', ha='center', fontsize=9)
+# 1. 10万個の素数を生成
+print("素数を計算中...")
+n_primes = 100000
+primes = generate_primes(n_primes)
 
-# グラフの装飾
-plt.title(r'Cross Section on the Critical Line: $|\zeta(0.5 + it)|$', fontsize=14)
-plt.xlabel('Imaginary Part: t', fontsize=12)
-plt.ylabel(r'Absolute Value: $|\zeta(0.5 + it)|$', fontsize=12)
-plt.grid(True, linestyle=':', alpha=0.6)
-plt.xlim(10, 30)
-plt.ylim(-0.3, 3.5)  # 下部にラベル用の余白を確保
-plt.legend()
+# 2. 前の素数からの増加量（素数間隔）を計算
+# n番目の素数 (index i) と n-1番目の素数 (index i-1) の差
+gaps = [primes[i] - primes[i - 1] for i in range(1, len(primes))]
 
+# 3. グラフの描画
+print("グラフを描画中...")
+# X軸: n番目の素数 (2番目から100,000番目)
+x = list(range(2, n_primes + 1))
+
+plt.figure(figsize=(12, 6))
+
+# 10万点あるため、ドットを小さく(s=1)、透過(alpha=0.3)させて密度を分かりやすくします
+plt.scatter(x, gaps, s=1, alpha=0.3, color="blue")
+
+plt.title("Prime Gaps (Difference from Previous Prime) up to 100,000th Prime")
+plt.xlabel("n-th Prime")
+plt.ylabel("Gap (p_n - p_{n-1})")
+plt.grid(True, linestyle="--", alpha=0.5)
+
+# グラフを表示
 plt.show()
