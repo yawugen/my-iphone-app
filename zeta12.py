@@ -1,18 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# ==========================================
-# 💡 環境に合わせた「インタラクティブ化」の設定
-# ==========================================
-# ① 通常のPython実行（コマンドプロンプト/ターミナル）や VS Code の場合：
-plt.ion()  # インタラクティブモードをオン（デフォルトで動くことが多いです）
-
-# ② Jupyter Notebook / JupyterLab の場合：
-# もし上記で動かない場合は、以下の行のコメントアウト(#)を外して実行してください
-# %matplotlib notebook
-# %matplotlib widget
-# ==========================================
-
+# 1. ゼータ関数を近似計算する関数
 def zeta_approx(s, N=3000):
     n = np.arange(1, N + 1)
     signs = (-1) ** (n - 1)
@@ -21,30 +10,31 @@ def zeta_approx(s, N=3000):
         eta += signs[i] / (n[i] ** s)
     return eta / (1.0 - 2.0 ** (1.0 - s))
 
-x = np.linspace(0.0, 1.0, 100)
-y = np.linspace(10.0, 30.0, 200)
-X, Y = np.meshgrid(x, y)
-S = X + 1j * Y
+# 2. 実部を 0.5 に固定し、虚部 t の範囲（10〜30）を設定
+t = np.linspace(10.0, 30.0, 500)  # 滑らかにするためにサンプリング数を500に増加
+s = 0.5 + 1j * t
 
-Z = np.abs(zeta_approx(S))
-Z = np.clip(Z, 0, 4)
+# 3. ゼータ関数の絶対値 |ζ(0.5 + it)| を計算
+z_abs = np.abs(zeta_approx(s))
 
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
+# 4. 2次元断面グラフの描画
+plt.figure(figsize=(10, 5))
+plt.plot(t, z_abs, color='red', linewidth=2, label=r'$|\zeta(0.5 + it)|$')
 
-surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none', alpha=0.8)
-ax.plot([0.5, 0.5], [10, 30], [0, 0], color='red', linewidth=2.5, label='Critical Line (Re(s)=0.5)')
+# 既知の非自明な零点（谷底が0になるポイント）をグラフ上にプロット
+zeros = [14.1347, 21.0220, 25.0109]
+for zero in zeros:
+    plt.axvline(x=zero, color='blue', linestyle='--', alpha=0.5)
+    plt.plot(zero, 0, 'bo')  # 青い点で零点を強調
+    plt.text(zero, -0.15, f'{zero:.2f}', color='blue', ha='center', fontsize=9)
 
-ax.set_title('Absolute Value of Riemann Zeta Function |$\zeta$(s)|', fontsize=14, pad=20)
-ax.set_xlabel('Real Part: Re(s)', fontsize=12)
-ax.set_ylabel('Imaginary Part: Im(s)', fontsize=12)
-ax.set_zlabel('|$\zeta$(s)|', fontsize=12)
-ax.legend()
-fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10)
-
-ax.view_init(elev=30, azim=-60)
+# グラフの装飾
+plt.title(r'Cross Section on the Critical Line: $|\zeta(0.5 + it)|$', fontsize=14)
+plt.xlabel('Imaginary Part: t', fontsize=12)
+plt.ylabel(r'Absolute Value: $|\zeta(0.5 + it)|$', fontsize=12)
+plt.grid(True, linestyle=':', alpha=0.6)
+plt.xlim(10, 30)
+plt.ylim(-0.3, 3.5)  # 下部にラベル用の余白を確保
+plt.legend()
 
 plt.show()
-
-# グラフウィンドウがすぐに閉じないようにするための待機（通常のスクリプト実行用）
-input("Enterキーを押すと終了します...")
